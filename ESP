@@ -1,0 +1,66 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Table to store colors for each player
+local playerColors = {}
+
+-- Function to create or update a highlight and name tag for a player
+local function highlightPlayer(player)
+    local character = player.Character or player.CharacterAdded:Wait()
+    local highlight = character:FindFirstChild("Highlight") or Instance.new("Highlight")
+
+    highlight.Parent = character
+
+    -- Assign a consistent color for each player if not already set
+    if not playerColors[player.UserId] then
+        playerColors[player.UserId] = Color3.new(math.random(), math.random(), math.random())
+    end
+    highlight.FillColor = playerColors[player.UserId]
+    highlight.OutlineColor = Color3.new(0, 0, 0) -- Optional outline color
+
+    -- Create a BillboardGui for the name tag
+    local billboard = character:FindFirstChild("BillboardGui") or Instance.new("BillboardGui")
+    billboard.Parent = character
+    billboard.Size = UDim2.new(0, 100, 0, 50)
+    billboard.Adornee = character
+    billboard.AlwaysOnTop = true
+
+    -- Create a TextLabel for the name and distance
+    local textLabel = billboard:FindFirstChild("TextLabel") or Instance.new("TextLabel")
+    textLabel.Parent = billboard
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
+    textLabel.TextScaled = true
+    textLabel.Text = player.Name -- Initial text
+
+    return textLabel
+end
+
+-- Function to refresh highlights and distance for all players
+local function refreshHighlights()
+    for _, player in ipairs(Players:GetPlayers()) do
+        local textLabel = highlightPlayer(player)
+        if player.Character and player.Character:FindFirstChild("PrimaryPart") then
+            local characterPosition = player.Character.PrimaryPart.Position
+            local referencePoint = Vector3.new(0, 0, 0) -- Change this to your reference point
+            local distance = (characterPosition - referencePoint).magnitude
+            textLabel.Text = player.Name .. " (" .. math.floor(distance) .. " studs)"
+        end
+    end
+end
+
+-- Highlight all players initially
+refreshHighlights()
+
+-- Connect to the PlayerAdded event to highlight new players
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        highlightPlayer(player)
+    end)
+end)
+
+-- Refresh highlights every frame
+RunService.RenderStepped:Connect(function()
+    refreshHighlights()
+end)
