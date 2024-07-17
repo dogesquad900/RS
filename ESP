@@ -1,9 +1,6 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
--- Table to store colors for each player
-local playerColors = {}
-
 -- Function to create or update a highlight and name tag for a player
 local function highlightPlayer(player)
     local character = player.Character or player.CharacterAdded:Wait()
@@ -11,11 +8,12 @@ local function highlightPlayer(player)
 
     highlight.Parent = character
 
-    -- Assign a consistent color for each player if not already set
-    if not playerColors[player.UserId] then
-        playerColors[player.UserId] = Color3.new(math.random(), math.random(), math.random())
+    -- Set the highlight color to the player's team color
+    if player.Team then
+        highlight.FillColor = player.Team.TeamColor.Color
+    else
+        highlight.FillColor = Color3.new(1, 1, 1) -- Default to white if no team
     end
-    highlight.FillColor = playerColors[player.UserId]
     highlight.OutlineColor = Color3.new(0, 0, 0) -- Optional outline color
 
     -- Create a BillboardGui for the name tag
@@ -33,6 +31,7 @@ local function highlightPlayer(player)
     textLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
     textLabel.TextScaled = true
     textLabel.Text = player.Name -- Initial text
+    textLabel.TextSize = 16 -- Set a fixed text size
 
     return textLabel
 end
