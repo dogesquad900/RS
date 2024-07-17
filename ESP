@@ -1,14 +1,12 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
--- Function to create or update a highlight and name tag for a player
-local function highlightPlayer(player)
+-- Function to create a highlight and name tag for a player
+local function createPlayerTags(player)
     local character = player.Character or player.CharacterAdded:Wait()
-    local highlight = character:FindFirstChild("Highlight") or Instance.new("Highlight")
+    local highlight = Instance.new("Highlight", character)
 
-    highlight.Parent = character
-
-    -- Set the highlight color to the player's team color
+    -- Set highlight color to player's team color
     if player.Team then
         highlight.FillColor = player.Team.TeamColor.Color
     else
@@ -16,50 +14,57 @@ local function highlightPlayer(player)
     end
     highlight.OutlineColor = Color3.new(0, 0, 0) -- Optional outline color
 
-    -- Create a BillboardGui for the name tag
-    local billboard = character:FindFirstChild("BillboardGui") or Instance.new("BillboardGui")
-    billboard.Parent = character
+    -- Create BillboardGui for name tag
+    local billboard = Instance.new("BillboardGui", character)
     billboard.Size = UDim2.new(0, 100, 0, 50)
     billboard.Adornee = character
     billboard.AlwaysOnTop = true
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0) -- Offset above the head by 1.5 studs
 
-    -- Create a TextLabel for the name and distance
-    local textLabel = billboard:FindFirstChild("TextLabel") or Instance.new("TextLabel")
-    textLabel.Parent = billboard
+    -- Create TextLabel for the name and distance
+    local textLabel = Instance.new("TextLabel", billboard)
     textLabel.Size = UDim2.new(1, 0, 1, 0)
     textLabel.BackgroundTransparency = 1
-    textLabel.TextColor3 = Color3.new(1, 1, 1) -- White text
-    textLabel.TextScaled = true
-    textLabel.Text = player.Name -- Initial text
-    textLabel.TextSize = 16 -- Set a fixed text size
+    textLabel.TextScaled = false
+    textLabel.TextSize = 15 -- Set a fixed text size
 
-    return textLabel
+    -- Set text color based on player's team color
+    if player.Team then
+        textLabel.TextColor3 = player.Team.TeamColor.Color
+    else
+        textLabel.TextColor3 = Color3.new(1, 1, 1) -- Default to white if no team
+    end
+
+    -- Update text with player's name
+    textLabel.Text = player.Name
 end
 
--- Function to refresh highlights and distance for all players
+-- Function to refresh highlights and distances for all players
 local function refreshHighlights()
     for _, player in ipairs(Players:GetPlayers()) do
-        local textLabel = highlightPlayer(player)
         if player.Character and player.Character:FindFirstChild("PrimaryPart") then
             local characterPosition = player.Character.PrimaryPart.Position
             local referencePoint = Vector3.new(0, 0, 0) -- Change this to your reference point
             local distance = (characterPosition - referencePoint).magnitude
-            textLabel.Text = player.Name .. " (" .. math.floor(distance) .. " studs)"
+            local textLabel = player.Character:FindFirstChild("BillboardGui"):FindFirstChild("TextLabel")
+            if textLabel then
+                textLabel.Text = player.Name .. " (" .. math.floor(distance) .. " studs)"
+            end
         end
     end
 end
 
--- Highlight all players initially
-refreshHighlights()
+-- Initial setup for existing players
+for _, player in ipairs(Players:GetPlayers()) do
+    createPlayerTags(player)
+end
 
--- Connect to the PlayerAdded event to highlight new players
+-- Connect to PlayerAdded event
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
-        highlightPlayer(player)
+        createPlayerTags(player)
     end)
 end)
 
 -- Refresh highlights every frame
-RunService.RenderStepped:Connect(function()
-    refreshHighlights()
-end)
+RunService.RenderStepped:Connect(refreshHighlights)
