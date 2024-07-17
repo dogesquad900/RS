@@ -19,7 +19,7 @@ local function createPlayerTags(player)
     billboard.Size = UDim2.new(0, 100, 0, 50)
     billboard.Adornee = character
     billboard.AlwaysOnTop = true
-    billboard.StudsOffset = Vector3.new(0, 3.5, 0) -- Offset above the head by 1.5 studs
+    billboard.StudsOffset = Vector3.new(0, 3, 0) -- Offset above the head by 3.5 studs
 
     -- Create TextLabel for the name and distance
     local textLabel = Instance.new("TextLabel", billboard)
@@ -66,5 +66,13 @@ Players.PlayerAdded:Connect(function(player)
     end)
 end)
 
--- Refresh highlights every frame
-RunService.RenderStepped:Connect(refreshHighlights)
+-- Check for new players every 0.5 seconds
+while true do
+    for _, player in ipairs(Players:GetPlayers()) do
+        if not player.Character or not player.Character:FindFirstChild("Highlight") then
+            createPlayerTags(player)
+        end
+    end
+    refreshHighlights()
+    wait(0.5)
+end
